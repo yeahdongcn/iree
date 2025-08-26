@@ -17,7 +17,7 @@
 #include <musa_runtime.h>
 #include <musa_fp16.h>
 #include <musa_bf16.h>
-#endif // IREE_MUSA_IS_CUDA
+#endif    // IREE_MUSA_IS_CUDA
 
 #define NCCL_MAJOR 2
 #define NCCL_MINOR 18
