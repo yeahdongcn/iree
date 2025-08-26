@@ -49,7 +49,7 @@ static iree_status_t iree_hal_cuda_dynamic_symbols_resolve_all(
         "when resolving " #cuda_symbol_name " using cuGetProcAddress"); \
   }
 #else
-IREE_RETURN_IF_ERROR(iree_dynamic_library_lookup_symbol(
+  IREE_RETURN_IF_ERROR(iree_dynamic_library_lookup_symbol(
       syms->dylib, "muInit", (void**)&syms->cuInit));
   syms->cuInit(0);
 #define IREE_CU_PFN_DECL(cuda_symbol_name, ...)                                 \
