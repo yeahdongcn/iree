@@ -26,33 +26,33 @@ static iree_status_t iree_hal_cuda_create_memory_pool(
     CUmemoryPool* IREE_RESTRICT out_pool) {
   *out_pool = NULL;
 
-  CUmemPoolProps pool_props = {
-      .allocType = CU_MEM_ALLOCATION_TYPE_PINNED,
-      // TODO: allow sharing of certain pool memory types by fd/HANDLE.
-      .handleTypes = CU_MEM_HANDLE_TYPE_NONE,
-      .location =
-          {
-              .type = CU_MEM_LOCATION_TYPE_DEVICE,
-              .id = cu_device,
-          },
-      .win32SecurityAttributes = NULL,
-      .reserved = {0},
-  };
+  // CUmemPoolProps pool_props = {
+  //     .allocType = CU_MEM_ALLOCATION_TYPE_PINNED,
+  //     // TODO: allow sharing of certain pool memory types by fd/HANDLE.
+  //     .handleTypes = CU_MEM_HANDLE_TYPE_NONE,
+  //     .location =
+  //         {
+  //             .type = CU_MEM_LOCATION_TYPE_DEVICE,
+  //             .id = cu_device,
+  //         },
+  //     .win32SecurityAttributes = NULL,
+  //     .reserved = {0},
+  // };
 
   CUmemoryPool pool = NULL;
-  IREE_CUDA_RETURN_IF_ERROR(cuda_symbols, cuMemPoolCreate(&pool, &pool_props),
-                            "cuMemPoolCreate");
-
-  iree_status_t status = IREE_CURESULT_TO_STATUS(
-      cuda_symbols,
-      cuMemPoolSetAttribute(pool, CU_MEMPOOL_ATTR_RELEASE_THRESHOLD,
-                            &params.release_threshold),
-      "cuMemPoolSetAttribute");
+  // IREE_CUDA_RETURN_IF_ERROR(cuda_symbols, cuMemPoolCreate(&pool, &pool_props),
+  //                           "cuMemPoolCreate");
+iree_status_t status;
+  // iree_status_t status = IREE_CURESULT_TO_STATUS(
+  //     cuda_symbols,
+  //     cuMemPoolSetAttribute(pool, CU_MEMPOOL_ATTR_RELEASE_THRESHOLD,
+  //                           &params.release_threshold),
+  //     "cuMemPoolSetAttribute");
 
   if (iree_status_is_ok(status)) {
     *out_pool = pool;
   } else {
-    IREE_CUDA_IGNORE_ERROR(cuda_symbols, cuMemPoolDestroy(pool));
+    // IREE_CUDA_IGNORE_ERROR(cuda_symbols, cuMemPoolDestroy(pool));
   }
   return status;
 }
@@ -96,13 +96,13 @@ void iree_hal_cuda_memory_pools_deinitialize(
   IREE_TRACE_ZONE_BEGIN(z0);
 
   if (pools->device_local) {
-    IREE_CUDA_IGNORE_ERROR(pools->cuda_symbols,
-                           cuMemPoolDestroy(pools->device_local));
+    // IREE_CUDA_IGNORE_ERROR(pools->cuda_symbols,
+    //                        cuMemPoolDestroy(pools->device_local));
     pools->device_local = NULL;
   }
 
   if (pools->other) {
-    IREE_CUDA_IGNORE_ERROR(pools->cuda_symbols, cuMemPoolDestroy(pools->other));
+    // IREE_CUDA_IGNORE_ERROR(pools->cuda_symbols, cuMemPoolDestroy(pools->other));
     pools->other = NULL;
   }
 
@@ -163,18 +163,18 @@ void iree_hal_cuda_memory_pools_merge_statistics(
         &pools->statistics.host_bytes_freed, iree_memory_order_relaxed);
     if (pools->device_local) {
       cuuint64_t pool_peak = 0;
-      IREE_CUDA_IGNORE_ERROR(
-          pools->cuda_symbols,
-          cuMemPoolGetAttribute(pools->device_local,
-                                CU_MEMPOOL_ATTR_USED_MEM_HIGH, &pool_peak));
+      // IREE_CUDA_IGNORE_ERROR(
+      //     pools->cuda_symbols,
+      //     cuMemPoolGetAttribute(pools->device_local,
+      //                           CU_MEMPOOL_ATTR_USED_MEM_HIGH, &pool_peak));
       statistics->device_bytes_peak += (iree_device_size_t)pool_peak;
     }
     if (pools->other) {
       cuuint64_t pool_peak = 0;
-      IREE_CUDA_IGNORE_ERROR(
-          pools->cuda_symbols,
-          cuMemPoolGetAttribute(pools->other, CU_MEMPOOL_ATTR_USED_MEM_HIGH,
-                                &pool_peak));
+      // IREE_CUDA_IGNORE_ERROR(
+      //     pools->cuda_symbols,
+      //     cuMemPoolGetAttribute(pools->other, CU_MEMPOOL_ATTR_USED_MEM_HIGH,
+      //                           &pool_peak));
       statistics->host_bytes_peak += (iree_device_size_t)pool_peak;
     }
   });
@@ -183,15 +183,15 @@ void iree_hal_cuda_memory_pools_merge_statistics(
 iree_status_t iree_hal_cuda_memory_pools_trim(
     iree_hal_cuda_memory_pools_t* pools,
     const iree_hal_cuda_memory_pooling_params_t* pooling_params) {
-  IREE_CUDA_RETURN_IF_ERROR(
-      pools->cuda_symbols,
-      cuMemPoolTrimTo(pools->device_local,
-                      pooling_params->device_local.minimum_capacity),
-      "cuMemPoolTrimTo");
-  IREE_CUDA_RETURN_IF_ERROR(
-      pools->cuda_symbols,
-      cuMemPoolTrimTo(pools->other, pooling_params->other.minimum_capacity),
-      "cuMemPoolTrimTo");
+  // IREE_CUDA_RETURN_IF_ERROR(
+  //     pools->cuda_symbols,
+  //     cuMemPoolTrimTo(pools->device_local,
+  //                     pooling_params->device_local.minimum_capacity),
+  //     "cuMemPoolTrimTo");
+  // IREE_CUDA_RETURN_IF_ERROR(
+  //     pools->cuda_symbols,
+  //     cuMemPoolTrimTo(pools->other, pooling_params->other.minimum_capacity),
+  //     "cuMemPoolTrimTo");
   return iree_ok_status();
 }
 
@@ -226,17 +226,18 @@ iree_status_t iree_hal_cuda_memory_pools_alloca(
   // external) but could use more buffer properties (including usage/export
   // flags) to better isolate the different usage patterns and keep the pools
   // operating with reasonable limits. We should be using the |pool| arg.
-  CUmemoryPool memory_pool =
-      iree_all_bits_set(params.type, IREE_HAL_MEMORY_TYPE_DEVICE_LOCAL)
-          ? pools->device_local
-          : pools->other;
+  // CUmemoryPool memory_pool =
+  //     iree_all_bits_set(params.type, IREE_HAL_MEMORY_TYPE_DEVICE_LOCAL)
+  //         ? pools->device_local
+  //         : pools->other;
 
   CUdeviceptr device_ptr = 0;
-  iree_status_t status = IREE_CURESULT_TO_STATUS(
-      pools->cuda_symbols,
-      cuMemAllocFromPoolAsync(&device_ptr, (size_t)allocation_size, memory_pool,
-                              stream),
-      "cuMemAllocFromPoolAsync");
+   iree_status_t status;
+  // iree_status_t status = IREE_CURESULT_TO_STATUS(
+  //     pools->cuda_symbols,
+  //     cuMemAllocFromPoolAsync(&device_ptr, (size_t)allocation_size, memory_pool,
+  //                             stream),
+  //     "cuMemAllocFromPoolAsync");
 
   // Wrap the allocated CUDA buffer in a HAL buffer.
   // NOTE: we don't provide a device allocator because we didn't allocate from
@@ -269,8 +270,8 @@ iree_status_t iree_hal_cuda_memory_pools_alloca(
   } else if (buffer) {
     iree_hal_buffer_release(buffer);
   } else {
-    IREE_CUDA_IGNORE_ERROR(pools->cuda_symbols,
-                           cuMemFreeAsync(device_ptr, stream));
+    // IREE_CUDA_IGNORE_ERROR(pools->cuda_symbols,
+    //                        cuMemFreeAsync(device_ptr, stream));
   }
 
   IREE_TRACE_ZONE_END(z0);
@@ -291,10 +292,10 @@ iree_status_t iree_hal_cuda_memory_pools_dealloca(
   iree_status_t status = iree_ok_status();
   if (iree_hal_cuda_buffer_type(buffer) == IREE_HAL_CUDA_BUFFER_TYPE_ASYNC) {
     // Try to schedule the buffer for freeing.
-    CUdeviceptr device_ptr = iree_hal_cuda_buffer_device_pointer(buffer);
-    status = IREE_CURESULT_TO_STATUS(pools->cuda_symbols,
-                                     cuMemFreeAsync(device_ptr, stream),
-                                     "cuMemFreeAsync");
+    // CUdeviceptr device_ptr = iree_hal_cuda_buffer_device_pointer(buffer);
+    // status = IREE_CURESULT_TO_STATUS(pools->cuda_symbols,
+    //                                  cuMemFreeAsync(device_ptr, stream),
+    //                                  "cuMemFreeAsync");
     if (iree_status_is_ok(status)) {
       // Drop the release callback so that we don't try to double-free the
       // buffer. Note that we only do this if the CUDA free succeeded as

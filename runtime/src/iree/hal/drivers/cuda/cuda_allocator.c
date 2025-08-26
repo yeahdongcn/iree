@@ -396,11 +396,11 @@ static iree_status_t iree_hal_cuda_allocator_allocate_buffer(
                                                 CU_MEM_ATTACH_GLOBAL));
       if (iree_status_is_ok(status) &&
           allocator->supports_concurrent_managed_access) {
-        // Prefetch the buffer to the GPU stream.
-        status = IREE_CURESULT_TO_STATUS(
-            allocator->symbols,
-            cuMemPrefetchAsync(device_ptr, allocation_size, allocator->device,
-                               allocator->stream));
+        // // Prefetch the buffer to the GPU stream.
+        // status = IREE_CURESULT_TO_STATUS(
+        //     allocator->symbols,
+        //     cuMemPrefetchAsync(device_ptr, allocation_size, allocator->device,
+        //                        allocator->stream));
       }
       host_ptr = (void*)device_ptr;
     } else {
