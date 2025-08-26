@@ -7,11 +7,17 @@
 #ifndef NCCL_H_
 #define NCCL_H_
 
+#if !defined(IREE_MUSA_IS_CUDA)
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 #if CUDART_VERSION >= 11000
 #include <cuda_bf16.h>
 #endif
+#else
+#include <musa_runtime.h>
+#include <musa_fp16.h>
+#include <musa_bf16.h>
+#endif // IREE_MUSA_IS_CUDA
 
 #define NCCL_MAJOR 2
 #define NCCL_MINOR 18

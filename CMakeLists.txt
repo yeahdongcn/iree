@@ -246,8 +246,32 @@ else()
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR WIN32)
     if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64|amd64)")
       set(IREE_CUDA_AVAILABLE ON)
+      add_definitions(-DIREE_MUSA_IS_CUDA)
     endif()
   endif()
+endif()
+
+#-------------------------------------------------------------------------------
+# MUSA Toolkit.
+#
+# Using the (optional) MUSA support in the compiler and runtime requires the
+# MOORE THREADS MUSA Toolkit. The toolkit must be installed ahead of time.
+#-------------------------------------------------------------------------------
+
+set(IREE_MUSA_AVAILABLE OFF)
+if (NOT EXISTS $ENV{MUSA_PATH})
+    if (NOT EXISTS /opt/musa)
+        set(MUSA_PATH /usr/local/musa)
+    else()
+        set(MUSA_PATH /opt/musa)
+    endif()
+else()
+    set(MUSA_PATH $ENV{MUSA_PATH})
+endif()
+list(APPEND CMAKE_MODULE_PATH "${MUSA_PATH}/cmake")
+find_package(MUSAToolkit)
+if (MUSAToolkit_FOUND)
+  set(IREE_MUSA_AVAILABLE ON)
 endif()
 
 #-------------------------------------------------------------------------------
@@ -295,6 +319,7 @@ set(IREE_HAL_DRIVER_AMDGPU_DEFAULT OFF)
 # CUDA support is disabled by default. Note: a CUDA-compatible GPU with drivers is still
 # required to actually run CUDA workloads.
 set(IREE_HAL_DRIVER_CUDA_DEFAULT OFF)
+set(IREE_HAL_DRIVER_MUSA_DEFAULT OFF)
 
 # HIP support is disabled by default. Note: a HIP-compatible GPU with drivers is still
 # required to actually run HIP workloads.
@@ -325,6 +350,7 @@ endif()
 
 option(IREE_HAL_DRIVER_AMDGPU "Enables the `amdgpu` runtime HAL driver" ${IREE_HAL_DRIVER_AMDGPU_DEFAULT})
 option(IREE_HAL_DRIVER_CUDA "Enables the 'cuda' runtime HAL driver" ${IREE_HAL_DRIVER_CUDA_DEFAULT})
+option(IREE_HAL_DRIVER_MUSA "Enables the 'musa' runtime HAL driver" ${IREE_HAL_DRIVER_MUSA_DEFAULT})
 option(IREE_HAL_DRIVER_HIP "Enables the 'hip' runtime HAL driver" ${IREE_HAL_DRIVER_HIP_DEFAULT})
 option(IREE_HAL_DRIVER_LOCAL_SYNC "Enables the 'local-sync' runtime HAL driver" ${IREE_HAL_DRIVER_DEFAULTS})
 option(IREE_HAL_DRIVER_LOCAL_TASK "Enables the 'local-task' runtime HAL driver" ${IREE_HAL_DRIVER_DEFAULTS})
@@ -379,6 +405,9 @@ if(IREE_HAL_DRIVER_AMDGPU)
 endif()
 if(IREE_HAL_DRIVER_CUDA)
   message(STATUS "  - cuda")
+endif()
+if(IREE_HAL_DRIVER_MUSA)
+  message(STATUS "  - musa")
 endif()
 if(IREE_HAL_DRIVER_HIP)
   message(STATUS "  - hip")
@@ -449,6 +478,12 @@ if(NOT IREE_CUDA_AVAILABLE)
   set(IREE_TARGET_BACKEND_CUDA_DEFAULT OFF)
 endif()
 cmake_dependent_option(IREE_TARGET_BACKEND_CUDA "Enables the 'cuda' compiler target backend" OFF ${IREE_BUILD_COMPILER} OFF)
+
+set(IREE_TARGET_BACKEND_MUSA_DEFAULT ${IREE_TARGET_BACKEND_DEFAULTS})
+if(NOT IREE_MUSA_AVAILABLE)
+  set(IREE_TARGET_BACKEND_MUSA_DEFAULT OFF)
+endif()
+cmake_dependent_option(IREE_TARGET_BACKEND_MUSA "Enables the 'musa' compiler target backend" OFF ${IREE_BUILD_COMPILER} OFF)
 
 # Non-default target backends either have additional dependencies or are
 # experimental/niche in some fashion.
@@ -829,6 +864,10 @@ if(IREE_TARGET_BACKEND_CUDA OR IREE_HAL_DRIVER_CUDA)
   add_subdirectory(build_tools/third_party/cuda EXCLUDE_FROM_ALL)
 endif()
 
+if(IREE_TARGET_BACKEND_MUSA OR IREE_HAL_DRIVER_MUSA)
+  add_subdirectory(build_tools/third_party/musa EXCLUDE_FROM_ALL)
+endif()
+
 #-------------------------------------------------------------------------------
 # MLIR/LLVM Dependency
 #-------------------------------------------------------------------------------
@@ -1015,6 +1054,10 @@ if(IREE_HAL_DRIVER_AMDGPU)
 endif()
 
 if(IREE_HAL_DRIVER_CUDA)
+  add_subdirectory(build_tools/third_party/nccl EXCLUDE_FROM_ALL)
+endif()
+
+if (IREE_HAL_DRIVER_MUSA)
   add_subdirectory(build_tools/third_party/nccl EXCLUDE_FROM_ALL)
 endif()
 
